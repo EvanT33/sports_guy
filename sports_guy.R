@@ -105,13 +105,14 @@ data <- data[!duplicated(data$team),]
 
 
 
+###########################################################
+############### Scrape and merge vegas odds ###############
+###########################################################
+
 # Vegas Insider MLB game predictions
 url <- 'https://www.actionnetwork.com/mlb/live-odds'
 webpage <- read_html(url)
 
-#################################################
-############### [[]] ###############
-#################################################
 
 # Using CSS selectors to scrape the Vegas section
 vegas_html <- html_nodes(webpage,'.h-h3')
@@ -167,12 +168,33 @@ keep(data_master, sure = TRUE)
 
 
 
+
+
+###########################################
+############### Do the math ###############
+###########################################
+
+
+data_master$risk <- 1
+data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # do the math
 # limit to the good bets
 # identify the bok
 # automate sports_guy
-
-
 
 
 
