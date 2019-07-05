@@ -6,6 +6,9 @@
 library(rvest)
 library(gdata)
 
+
+sg <- function(go){
+
 # FiveThirtyEight MLB game predictions
 url <- 'https://projects.fivethirtyeight.com/2019-mlb-predictions/games/'
 webpage <- read_html(url)
@@ -34,23 +37,23 @@ date <- as.data.frame(date)
 data <- date
 data$type <- ""
 for (k in 0:(nrow(data)/3 - 1)) {
-  data$type[1+3*k] <- "date"
-  data$type[2+3*k] <- "away"
-  data$type[3+3*k] <- "home"
+      data$type[1+3*k] <- "date"
+      data$type[2+3*k] <- "away"
+      data$type[3+3*k] <- "home"
 }
 data$gamedate <- ""
 data$date <- as.character(data$date)
 data$gamedate <- as.character(data$gamedate)
 for (k in 0:(nrow(data)/3 - 1)) {
-  data$gamedate[1+3*k] <- data$date[1+3*k]
+      data$gamedate[1+3*k] <- data$date[1+3*k]
 }
 
 for (k in 2:nrow(data)) {
-  if (data$gamedate[k] == ""){
-    data$gamedate[k] <- data$gamedate[k-1]
-    } else {
-      data$gamedate[k] <- data$gamedate[k]
-    }
+      if (data$gamedate[k] == ""){
+            data$gamedate[k] <- data$gamedate[k-1]
+      } else {
+            data$gamedate[k] <- data$gamedate[k]
+      }
 }
 
 data <- data[-which(data$type == "date"), ]
@@ -90,7 +93,7 @@ names(data)[1] <- "team"
 # create game_id and clean data into correct formats
 data$g_id <- ""
 for (k in 1:nrow(data)) {
-  data$g_id[k] <- ceiling(k/2)
+      data$g_id[k] <- ceiling(k/2)
 }
 cols <- c("gamedate", "g_id", "team", "winp")
 data <- data[ ,cols]
@@ -177,24 +180,23 @@ keep(data_master, sure = TRUE)
 
 data_master$risk <- 1
 data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
+data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(data_master$vegas_odds - 100), 100/(data_master$vegas_odds+100))
+data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
+data_master$top <- ifelse(data_master$ev > 0.06, 1, 0)
+data_master <- data_master[order(-data_master$ev),] 
+data_master <- data_master[which(data_master$ev > 0.03),]
+
+data_print <- data_master[, c(1, 6, 11)]
+
+
+print(Sys.Date())
+print(data_print)
+
+}
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-# do the math
-# limit to the good bets
-# identify the bok
-# automate sports_guy
 
 
 
