@@ -167,7 +167,8 @@ data_master$vegas_odds <- as.numeric(data_master$vegas_odds)
 
 
 # remove unneeded datasets
-keep(data_master, sure = TRUE)
+keep(data_master, sg, sure = TRUE)
+
 
 
 
