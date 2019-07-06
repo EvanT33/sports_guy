@@ -6,9 +6,6 @@
 library(rvest)
 library(gdata)
 
-
-sg <- function(go){
-
 # FiveThirtyEight MLB game predictions
 url <- 'https://projects.fivethirtyeight.com/2019-mlb-predictions/games/'
 webpage <- read_html(url)
@@ -37,23 +34,23 @@ date <- as.data.frame(date)
 data <- date
 data$type <- ""
 for (k in 0:(nrow(data)/3 - 1)) {
-      data$type[1+3*k] <- "date"
-      data$type[2+3*k] <- "away"
-      data$type[3+3*k] <- "home"
+   data$type[1+3*k] <- "date"
+   data$type[2+3*k] <- "away"
+   data$type[3+3*k] <- "home"
 }
 data$gamedate <- ""
 data$date <- as.character(data$date)
 data$gamedate <- as.character(data$gamedate)
 for (k in 0:(nrow(data)/3 - 1)) {
-      data$gamedate[1+3*k] <- data$date[1+3*k]
+   data$gamedate[1+3*k] <- data$date[1+3*k]
 }
 
 for (k in 2:nrow(data)) {
-      if (data$gamedate[k] == ""){
-            data$gamedate[k] <- data$gamedate[k-1]
-      } else {
-            data$gamedate[k] <- data$gamedate[k]
-      }
+   if (data$gamedate[k] == ""){
+      data$gamedate[k] <- data$gamedate[k-1]
+   } else {
+      data$gamedate[k] <- data$gamedate[k]
+   }
 }
 
 data <- data[-which(data$type == "date"), ]
@@ -93,7 +90,7 @@ names(data)[1] <- "team"
 # create game_id and clean data into correct formats
 data$g_id <- ""
 for (k in 1:nrow(data)) {
-      data$g_id[k] <- ceiling(k/2)
+   data$g_id[k] <- ceiling(k/2)
 }
 cols <- c("gamedate", "g_id", "team", "winp")
 data <- data[ ,cols]
@@ -139,18 +136,18 @@ vegas <- vegas[!duplicated(vegas$abbr),]
 
 
 # team mappings
-team <- c("Marlins", 	"Nationals", 	"Marlins", 	"Nationals", 	"Cubs", 	
-          "Pirates", 	"Red Sox", 	"Blue Jays", 	"Yankees", 	"Mets", 	
-          "Orioles", 	"Rays", 	"Brewers", 	"Reds", 	"Phillies", 	
-          "Braves", 	"Angels", 	"Rangers", 	"Astros", 	"Rockies", 	
-          "Tigers", 	"White Sox", 	"Indians", 	"Royals", 	"Twins", 	
-          "Athletics", 	"Giants", 	"Padres", 	"Diamondbacks", 	
-          "Dodgers", 	"Cardinals", 	"Mariners", 	"Tigers", 	"White Sox")
-abbr <- c("MIA", 	"WSH", 	"MIA", 	"WSH", 	"CHC", 	"PIT", 	"BOS", 	"TOR", 	
-          "NYY", 	"NYM", 	"BAL", 	"TB", 	"MIL", 	"CIN", 	"PHI", 	"ATL", 	
-          "LAA", 	"TEX", 	"HOU", 	"COL", 	"DET", 	"CWS", 	"CLE", 	"KC", 	
-          "MIN", 	"OAK", 	"SF", 	"SD", 	"ARI", 	"LAD", 	"STL", 	"SEA", 	
-          "DET", 	"CWS")
+team <- c("Marlins",  "Nationals",  "Marlins",  "Nationals",  "Cubs",   
+          "Pirates",  "Red Sox",  "Blue Jays",  "Yankees",  "Mets",   
+          "Orioles",  "Rays",   "Brewers",  "Reds",   "Phillies",   
+          "Braves",   "Angels",   "Rangers",  "Astros",   "Rockies",  
+          "Tigers",   "White Sox",  "Indians",  "Royals",   "Twins",  
+          "Athletics",  "Giants",   "Padres",   "Diamondbacks",   
+          "Dodgers",  "Cardinals",  "Mariners",   "Tigers",   "White Sox")
+abbr <- c("MIA",  "WSH",  "MIA",  "WSH",  "CHC",  "PIT",  "BOS",  "TOR",  
+          "NYY",  "NYM",  "BAL",  "TB",   "MIL",  "CIN",  "PHI",  "ATL",  
+          "LAA",  "TEX",  "HOU",  "COL",  "DET",  "CWS",  "CLE",  "KC",   
+          "MIN",  "OAK",  "SF",   "SD",   "ARI",  "LAD",  "STL",  "SEA",  
+          "DET",  "CWS")
 team_map <- cbind(team, abbr)
 
 
@@ -166,11 +163,6 @@ data_master$gamedate <- Sys.Date()
 data_master$vegas_odds <- as.numeric(data_master$vegas_odds)
 
 
-# remove unneeded datasets
-keep(data_master, sg, sure = TRUE)
-
-
-
 
 
 
@@ -183,19 +175,44 @@ data_master$risk <- 1
 data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
 data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(data_master$vegas_odds - 100), 100/(data_master$vegas_odds+100))
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
-data_master$top <- ifelse(data_master$ev > 0.06, 1, 0)
+data_master$top <- ifelse(data_master$ev > 0.06, "*", 0)
 data_master <- data_master[order(-data_master$ev),] 
 data_master <- data_master[which(data_master$ev > 0.03),]
-
 data_print <- data_master[, c(1, 6, 11)]
 
-
-print(Sys.Date())
-print(data_print)
-
+### Clean data for tweet output
+date <- data.frame(Sys.Date(),"","")
+empty <- data.frame("","","")
+names(date) <- c("abbr", "vegas_odds", "top")
+names(empty) <- c("abbr", "vegas_odds", "top")
+date$abbr <- as.character(date$abbr)
+data_print$vegas_odds <- as.character(data_print$vegas_odds)
+data_print <- rbind(date, empty, data_print)
+data_print$vegas_odds <- as.character(data_print$vegas_odds)
+str(data_print)
+for (k in 3:nrow(data_print)){
+   data_print$vegas_odds[k] <- ifelse(substr(data_print$vegas_odds[k],1,1) == "-",
+                                      data_print$vegas_odds[k], 
+                                      paste("+",data_print$vegas_odds[k],sep = ""))
 }
 
 
+
+# remove unneeded datasets
+keep(data_master, data_print, sure = TRUE)
+
+
+# evan
+write.table(data_print, "output.txt", row.names = F, col.names = F, quote = F)
+
+
+
+
+# andy
+# file.create("output.txt")
+# fileConn <- file("output.txt")
+# writeLines(paste(data_print), fileConn)
+# close(fileConn)
 
 
 
