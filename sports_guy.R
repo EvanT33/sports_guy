@@ -175,9 +175,10 @@ data_master$risk <- 1
 data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
 data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(data_master$vegas_odds - 100), 100/(data_master$vegas_odds+100))
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
-data_master$top <- ifelse(data_master$ev > 0.06, "*", "")
-data_master <- data_master[order(-data_master$ev),] 
-data_master <- data_master[which(data_master$ev > 0.03),]
+data_master$top <- ifelse(data_master$ev > 0.1, "*", "")
+data_master$top <- ifelse(data_master$ev > 0.2, "**", "")
+data_master <- data_master[order(data_master$ev),] 
+#data_master <- data_master[which(data_master$ev > 0.03),]
 data_print <- data_master[, c(1, 6, 11)]
 
 ### Clean data for tweet output
@@ -213,8 +214,4 @@ write.table(data_print, "output.txt", row.names = F, col.names = F, quote = F)
 # fileConn <- file("output.txt")
 # writeLines(paste(data_print), fileConn)
 # close(fileConn)
-
-
-
-
 
