@@ -177,8 +177,8 @@ data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
 data_master$top <- ifelse(data_master$ev > 0.1, "*", "")
 data_master$top <- ifelse(data_master$ev > 0.2, "**", data_master$top)
-data_master <- data_master[order(data_master$ev),] 
-#data_master <- data_master[which(data_master$ev > 0.03),]
+data_master <- data_master[order(-data_master$ev),] 
+data_master <- data_master[which(data_master$ev > 0.03),]
 data_print <- data_master[, c(1, 6, 11)]
 
 ### Clean data for tweet output
@@ -189,6 +189,7 @@ names(empty) <- c("abbr", "vegas_odds", "top")
 date$abbr <- as.character(date$abbr)
 data_print$vegas_odds <- as.character(data_print$vegas_odds)
 data_print <- rbind(date, empty, data_print)
+#### Maybe here??? ####
 data_print$vegas_odds <- as.character(data_print$vegas_odds)
 str(data_print)
 for (k in 3:nrow(data_print)){
@@ -197,7 +198,9 @@ for (k in 3:nrow(data_print)){
                                       paste("+",data_print$vegas_odds[k],sep = ""))
 }
 
-
+data_print <- rbind(data_print, empty)
+data_print <- rbind(data_print, empty)
+data_print$abbr[nrow(data_print)] <- "#FreePicks"
 
 # remove unneeded datasets
 keep(data_master, data_print, sure = TRUE)
