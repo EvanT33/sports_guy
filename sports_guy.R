@@ -126,13 +126,13 @@ vegas <- as.data.frame(vegas)
 # Clean and reformat
 vegas$keep <- ""
 for (k in 1:nrow(vegas)){
-      vegas$keep[k] <- ifelse(1 == k %% 8,1,0)
+      vegas$keep[k] <- ifelse(1 == k %% 6,1,0)
 }
 for (k in 1:nrow(vegas)){
-      vegas$keep[k] <- ifelse(3 == k %% 8,1,vegas$keep[k])
+      vegas$keep[k] <- ifelse(2 == k %% 6,1,vegas$keep[k])
 }
 for (k in 1:nrow(vegas)){
-      vegas$keep[k] <- ifelse(7 == k %% 8,1,vegas$keep[k])
+      vegas$keep[k] <- ifelse(5 == k %% 6,1,vegas$keep[k])
 }
 
 vegas <- vegas[which(vegas$keep == "1"),]
@@ -194,8 +194,8 @@ data_master$risk <- 1
 data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
 data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(data_master$vegas_odds - 100), 100/(data_master$vegas_odds+100))
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
-data_master$top <- ifelse(data_master$ev > 0.05, "*", "")
-data_master$top <- ifelse(data_master$ev > 0.1, "**", data_master$top)
+data_master$top <- ifelse(data_master$ev > 0.1, "*", "")
+data_master$top <- ifelse(data_master$ev > 0.2, "**", data_master$top)
 data_master <- data_master[order(-data_master$ev),] 
 data_master <- data_master[which(data_master$ev > 0.03),]
 data_print <- data_master[, c(1, 6, 11)]
