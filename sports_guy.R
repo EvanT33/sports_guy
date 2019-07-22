@@ -34,23 +34,23 @@ date <- as.data.frame(date)
 data <- date
 data$type <- ""
 for (k in 0:(nrow(data)/3 - 1)) {
-   data$type[1+3*k] <- "date"
-   data$type[2+3*k] <- "away"
-   data$type[3+3*k] <- "home"
+      data$type[1+3*k] <- "date"
+      data$type[2+3*k] <- "away"
+      data$type[3+3*k] <- "home"
 }
 data$gamedate <- ""
 data$date <- as.character(data$date)
 data$gamedate <- as.character(data$gamedate)
 for (k in 0:(nrow(data)/3 - 1)) {
-   data$gamedate[1+3*k] <- data$date[1+3*k]
+      data$gamedate[1+3*k] <- data$date[1+3*k]
 }
 
 for (k in 2:nrow(data)) {
-   if (data$gamedate[k] == ""){
-      data$gamedate[k] <- data$gamedate[k-1]
-   } else {
-      data$gamedate[k] <- data$gamedate[k]
-   }
+      if (data$gamedate[k] == ""){
+            data$gamedate[k] <- data$gamedate[k-1]
+      } else {
+            data$gamedate[k] <- data$gamedate[k]
+      }
 }
 
 data <- data[-which(data$type == "date"), ]
@@ -90,7 +90,7 @@ names(data)[1] <- "team"
 # create game_id and clean data into correct formats
 data$g_id <- ""
 for (k in 1:nrow(data)) {
-   data$g_id[k] <- ceiling(k/2)
+      data$g_id[k] <- ceiling(k/2)
 }
 cols <- c("gamedate", "g_id", "team", "winp")
 data <- data[ ,cols]
@@ -109,29 +109,48 @@ data <- data[!duplicated(data$team),]
 ############### Scrape and merge vegas odds ###############
 ###########################################################
 
-# Vegas Insider MLB game predictions
+# Bet 365 MLB game odds
 url <- 'https://www.actionnetwork.com/mlb/live-odds'
 webpage <- read_html(url)
 
 
 # Using CSS selectors to scrape the Vegas section
-vegas_html <- html_nodes(webpage,'.h-h3')
-vegas_odds_html <- html_nodes(webpage,'.mainOdds__row')
+vegas_html <- html_nodes(webpage,'.bookList__column, .h-h3')
 
 # Converting the Vegas data to text
 vegas <- html_text(vegas_html)
-vegas_odds <- html_text(vegas_odds_html)
 
 # Convert to dataframe, reformat
 vegas <- as.data.frame(vegas)
-vegas_odds <- as.data.frame(vegas_odds)
-vegas_odds$vegas_odds <- substr(vegas_odds$vegas_odds, 5, 8)
-vegas$vegas <- as.character(vegas$vegas)
+
+# Clean and reformat
 vegas$keep <- ""
-vegas$keep <- ifelse(nchar(vegas$vegas)>1, 1, 0)
-vegas <- vegas[which(vegas$keep == 1), ]
-vegas <- cbind(vegas$vegas, vegas_odds)
-names(vegas)[1] <- "abbr"
+for (k in 1:nrow(vegas)){
+      vegas$keep[k] <- ifelse(1 == k %% 8,1,0)
+}
+for (k in 1:nrow(vegas)){
+      vegas$keep[k] <- ifelse(3 == k %% 8,1,vegas$keep[k])
+}
+for (k in 1:nrow(vegas)){
+      vegas$keep[k] <- ifelse(7 == k %% 8,1,vegas$keep[k])
+}
+
+vegas <- vegas[which(vegas$keep == "1"),]
+vegas$keep <- substr(vegas$vegas,5,8)
+vegas$vegas <- substr(vegas$vegas,1,4)
+for (k in 1:nrow(vegas)){
+      vegas$keep[k-1] <- vegas$keep[k]
+}
+for (k in 1:(nrow(vegas)-2)){
+      vegas$keep[k] <- ifelse(vegas$keep[k] == "", vegas$vegas[k+2], vegas$keep[k])
+}
+vegas$drop <- ""
+for (k in 1:nrow(vegas)){
+      vegas$drop[k] <- ifelse(0 == k %% 3,1,0)
+}
+vegas <- vegas[which(vegas$drop != 1),]
+vegas <- vegas[,1:2]
+names(vegas) <- c("abbr", "vegas_odds")
 vegas <- vegas[!duplicated(vegas$abbr),]
 
 
@@ -175,8 +194,8 @@ data_master$risk <- 1
 data_master$win <- ifelse(data_master$vegas_odds > 0, data_master$vegas_odds/100, abs(100/data_master$vegas_odds))
 data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(data_master$vegas_odds - 100), 100/(data_master$vegas_odds+100))
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
-data_master$top <- ifelse(data_master$ev > 0.1, "*", "")
-data_master$top <- ifelse(data_master$ev > 0.2, "**", data_master$top)
+data_master$top <- ifelse(data_master$ev > 0.05, "*", "")
+data_master$top <- ifelse(data_master$ev > 0.1, "**", data_master$top)
 data_master <- data_master[order(-data_master$ev),] 
 data_master <- data_master[which(data_master$ev > 0.03),]
 data_print <- data_master[, c(1, 6, 11)]
@@ -193,9 +212,9 @@ data_print <- rbind(date, empty, data_print)
 data_print$vegas_odds <- as.character(data_print$vegas_odds)
 str(data_print)
 for (k in 3:nrow(data_print)){
-   data_print$vegas_odds[k] <- ifelse(substr(data_print$vegas_odds[k],1,1) == "-",
-                                      data_print$vegas_odds[k], 
-                                      paste("+",data_print$vegas_odds[k],sep = ""))
+      data_print$vegas_odds[k] <- ifelse(substr(data_print$vegas_odds[k],1,1) == "-",
+                                         data_print$vegas_odds[k], 
+                                         paste("+",data_print$vegas_odds[k],sep = ""))
 }
 
 data_print <- rbind(data_print, empty)
@@ -206,15 +225,5 @@ data_print$abbr[nrow(data_print)] <- "#FreePicks"
 keep(data_master, data_print, sure = TRUE)
 
 
-# evan
+# save table
 write.table(data_print, "output.txt", row.names = F, col.names = F, quote = F)
-
-
-
-
-# andy
-# file.create("output.txt")
-# fileConn <- file("output.txt")
-# writeLines(paste(data_print), fileConn)
-# close(fileConn)
-
