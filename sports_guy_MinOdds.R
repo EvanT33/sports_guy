@@ -1,10 +1,15 @@
 # This program pulls FiveThirtyEight MLB game probabilities, along
 # with Vegas odds, and then identifies all bets each day with 
-# an expected return over [3%]. Go hawks.
+# an expected return over the specified ev
+
+# call sportsguy(ev). Default is sportsguy(0.03)
 
 # load packages
 library(rvest)
 library(gdata)
+
+
+sportsguy <- function(ev = .03){
 
 # FiveThirtyEight MLB game predictions
 url <- 'https://projects.fivethirtyeight.com/2019-mlb-predictions/games/'
@@ -196,36 +201,16 @@ data_master$implied <- ifelse(data_master$vegas_odds<0, data_master$vegas_odds/(
 data_master$ev <- data_master$winp*data_master$win - (1-data_master$winp)*data_master$risk
 data_master$top <- ifelse(data_master$ev > 0.1, "*", "")
 data_master$top <- ifelse(data_master$ev > 0.2, "**", data_master$top)
-data_master <- data_master[order(-data_master$ev),] 
-data_master <- data_master[which(data_master$ev > 0.03),]
-data_print <- data_master[, c(1, 6, 11)]
+data_master$min_odds <- ifelse(data_master$winp <= 0.5, 
+                               (1-data_master$winp)/data_master$winp*100 + ev/data_master$winp*100,
+                               (-1)*100*data_master$winp/(1 - data_master$winp + ev))
+data_master$min_odds <- round(data_master$min_odds, digits = 1)
+data_master$min_odds <- ifelse(data_master$min_odds > 0,  paste("+", data_master$min_odds, sep = ""), data_master$min_odds)
 
-### Clean data for tweet output
-date <- data.frame(Sys.Date(),"","MLB")
-empty <- data.frame("","","")
-names(date) <- c("abbr", "vegas_odds", "top")
-names(empty) <- c("abbr", "vegas_odds", "top")
-date$abbr <- as.character(date$abbr)
-data_print$vegas_odds <- as.character(data_print$vegas_odds)
-data_print <- rbind(date, empty, data_print)
-#### Maybe here??? ####
-data_print$vegas_odds <- as.character(data_print$vegas_odds)
-str(data_print)
-for (k in 3:nrow(data_print)){
-      data_print$vegas_odds[k] <- ifelse(substr(data_print$vegas_odds[k],1,1) == "-",
-                                         data_print$vegas_odds[k], 
-                                         paste("+",data_print$vegas_odds[k],sep = ""))
+
+# keep good columns
+data_print <- data_master[, c("abbr", "min_odds")]
+
+return(data_print)
+
 }
-
-data_print <- rbind(data_print, empty)
-data_print <- rbind(data_print, empty)
-data_print$abbr[nrow(data_print)] <- "#FreePicks #MLB #SportsGuy"
-
-# remove unneeded datasets
-keep(data_master, data_print, sure = TRUE)
-
-
-# save table
-write.table(data_print, "output.txt", row.names = F, col.names = F, quote = F)
-
-
