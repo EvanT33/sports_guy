@@ -28,6 +28,7 @@ chance <- as.data.frame(chance)
 team <- as.data.frame(team)
 
 # formatting
+team <- team[c(130:nrow(team)),] # added 20191120
 team <- team[-c(1:33),]
 team <- as.data.frame(team)
 team <- team[-c(33:nrow(team)),]
@@ -83,10 +84,12 @@ vegas <- as.data.frame(vegas)
 vegas <- vegas[-which(vegas$vegas == "Picks"),]
 vegas <- as.data.frame(vegas)
 vegas$keep <- 0
+vegas$vegas <- trimws(vegas$vegas)
+vegas <- vegas[which(vegas$vegas != ""),]
 for (k in 0:(nrow(vegas)/11-1)){
    vegas$keep[11*k + 1] <- 1
    vegas$keep[11*k + 2] <- 1
-   vegas$keep[11*k + 3] <- 1
+   vegas$keep[11*k + 5] <- 1
 }
 vegas <- vegas[which(vegas$keep == 1),]
 vegas <- as.data.frame(vegas)
@@ -102,19 +105,26 @@ vegas <- vegas[-which(vegas$odds == ""),]
 row.names(vegas) <- 1:nrow(vegas)
 vegas$odds <- trimws(vegas$odds)
 vegas$pos = regexpr('-', vegas$odds)
-vegas$odds <- substr(vegas$odds,2,9)
+vegas$odds <- substr(vegas$odds,2,nchar(vegas$odds))
 vegas$pos = regexpr('-', vegas$odds)
+vegas$pos2 = regexpr('\\+', vegas$odds)
+vegas$pos3 <- max(vegas$pos, vegas$pos2)
+vegas$pos4 <- nchar(vegas$odds)
 vegas$odds2 <- ""
 for (k in 1:nrow(vegas)){
-   vegas$odds2[k] <- ifelse((k %% 2) == 0,substr(vegas$odds[k],5,8),substr(vegas$odds[k],1,4))
+   vegas$odds2[k] <- ifelse((k %% 2) == 0,
+                            substr(vegas$odds[k],vegas$pos3[k],vegas$pos4[k]),
+                            substr(vegas$odds[k],1,vegas$pos3[k] - 1))
 }
-vegas <- vegas[,c(1,5)]
+vegas <- vegas[,c(1,8)]
 names(vegas) <- c("team", "odds")
 vegas <- vegas[!duplicated(vegas$team),]
 
 #merge vegas odds onto df
 df <- merge(df, vegas, by="team", all.x = TRUE, all.y = FALSE, sort = FALSE)
 names(df) <- c("team", "winp", "abbr", "vegas_odds")
+df$winp <- as.character(df$winp)
+df$winp <- gsub("%", "", df$winp)
 df$winp <- as.numeric(df$winp)
 df$winp <- df$winp/100
 df$vegas_odds <- as.numeric(df$vegas_odds)
@@ -170,4 +180,5 @@ keep(df, data_print, sure = TRUE)
 
 # save table
 write.table(data_print, "output_nfl.txt", row.names = F, col.names = F, quote = F)
+
 
