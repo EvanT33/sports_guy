@@ -28,8 +28,10 @@ chance <- as.data.frame(chance)
 team <- as.data.frame(team)
 
 # formatting
-team <- team[c(130:nrow(team)),]#added 20191120
-# team <- team[-c(1:33),]
+#team <- team[c(130:nrow(team)),]#added 20191120
+team <- team[c(98:nrow(team)),] #added 20191218, week 16 when Saturday games start
+# team <- team[-c(1:33),]#delete row above, unhide this row if 538 
+#doesnt include the check boxes for playoff scenarios (ie, early in the season)
 team <- as.data.frame(team)
 team <- team[-c(33:nrow(team)),]
 team <- as.data.frame(team)
