@@ -83,7 +83,7 @@ vegas <- html_text(vegas_html)
 
 # Convert to dataframe, reformat
 vegas <- as.data.frame(vegas)
-vegas <- vegas[-which(vegas$vegas == "Picks"),]
+#vegas <- vegas[-which(vegas$vegas == "Picks"),] #commented out 12/26/19
 vegas <- as.data.frame(vegas)
 vegas$keep <- 0
 vegas$vegas <- trimws(vegas$vegas)
