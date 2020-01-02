@@ -30,8 +30,8 @@ team <- as.data.frame(team)
 # formatting
 #team <- team[c(130:nrow(team)),]#added 20191120
 #team <- team[c(98:nrow(team)),] #added 20191218, week 16 when Saturday games start
-team <- team[c(66:nrow(team)),] #added 20191226
-# team <- team[-c(1:33),]#delete row above, unhide this row if 538 
+#team <- team[c(66:nrow(team)),] #added 20191226
+team <- team[-c(1:33),]#delete row above, unhide this row if 538 
 #doesnt include the check boxes for playoff scenarios (ie, early in the season)
 team <- as.data.frame(team)
 team <- team[-c(33:nrow(team)),]
@@ -64,6 +64,7 @@ abbr <- c("LA", "SEA", "ARI", "CIN", "ATL", "HOU", "BAL", "PIT", "BUF",
 teamabbr <- cbind(team, abbr)
 df$team <- trimws(df$team)
 df <- merge(df, teamabbr, by="team", all.y =  FALSE, sort = FALSE)
+df <- df[!duplicated(df$team),] #1/2/2020
 
 ###########################################################
 ############### Scrape and merge vegas odds ###############
@@ -84,7 +85,7 @@ vegas <- html_text(vegas_html)
 
 # Convert to dataframe, reformat
 vegas <- as.data.frame(vegas)
-#vegas <- vegas[-which(vegas$vegas == "Picks"),] #commented out 12/26/19
+vegas <- vegas[-which(vegas$vegas == "Picks"),] #commented out 12/26/19
 vegas <- as.data.frame(vegas)
 vegas$keep <- 0
 vegas$vegas <- trimws(vegas$vegas)
@@ -97,7 +98,7 @@ for (k in 0:(nrow(vegas)/11-1)){
 vegas <- vegas[which(vegas$keep == 1),]
 vegas <- as.data.frame(vegas)
 row.names(vegas) <- 1:nrow(vegas)
-vegas <- vegas[1:(nrow(df)/2*3),]
+#vegas <- vegas[1:(nrow(df)/2*3),] #commented out 1/2/2020
 vegas$odds <- ""
 vegas <- data.frame(lapply(vegas, as.character), stringsAsFactors=FALSE)
 for (k in 0:(nrow(vegas)/3-1)){
@@ -121,11 +122,12 @@ for (k in 1:nrow(vegas)){
 }
 vegas <- vegas[,c(1,8)]
 names(vegas) <- c("team", "odds")
-vegas <- vegas[!duplicated(vegas$team),]
 
 #merge vegas odds onto df
-df <- merge(df, vegas, by="team", all.x = TRUE, all.y = FALSE, sort = FALSE)
-names(df) <- c("team", "winp", "abbr", "vegas_odds")
+df <- merge(vegas, df, by="team", all.x = TRUE, all.y = FALSE, sort = FALSE)
+names(df) <- c("team", "vegas_odds", "winp", "abbr")
+#df <- merge(vegas, df, by="team", all.x = TRUE, all.y = FALSE, sort = FALSE) #1/2/2020
+#names(df) <- c("team", "winp", "abbr", "vegas_odds") #1/2/2020
 df$winp <- as.character(df$winp)
 df$winp <- gsub("%", "", df$winp)
 df$winp <- as.numeric(df$winp)
@@ -154,7 +156,7 @@ df$top <- ifelse(df$ev > 0.1, "*", "")
 df$top <- ifelse(df$ev > 0.2, "**", df$top)
 df <- df[order(-df$ev),] 
 df <- df[which(df$ev > 0.03),]
-data_print <- df[, c(3, 4, 9)]
+data_print <- df[, c(4, 2, 9)]
 
 ### Clean data for tweet output
 date <- data.frame(Sys.Date(),"","NFL")
@@ -183,5 +185,4 @@ keep(df, data_print, sure = TRUE)
 
 # save table
 write.table(data_print, "output_nfl.txt", row.names = F, col.names = F, quote = F)
-
 
